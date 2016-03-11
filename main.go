@@ -21,13 +21,13 @@ var db *gorm.DB
 type User struct {
 	gorm.Model
 
-	id   int64
+	Id   int64
 	Name string
 }
 
 type ResponseJson struct {
-	ID   int64
-	Hoge string
+	Id   int64
+	Name string
 }
 
 func getUser(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -46,8 +46,8 @@ func getUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	var response ResponseJson
-	response.ID = userID
-	response.Hoge = "Hoge"
+	response.Id = userID
+	response.Name = user.Name
 	json.NewEncoder(w).Encode(response)
 }
 
