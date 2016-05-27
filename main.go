@@ -2,18 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/k0kubun/pp"
 
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
-
-	"github.com/k0kubun/pp"
 )
 
 var db *gorm.DB
@@ -21,56 +20,76 @@ var db *gorm.DB
 type User struct {
 	gorm.Model
 
-	Id   int64
-	Name string
+	Name  string `sql:"not null; unique"`
+	Email string
 }
 
-type ResponseJson struct {
-	Id   int64
-	Name string
+func addUser(c web.C, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	user := new(User)
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	tx := db.Begin()
+	err = tx.Create(&user).Error
+	if err != nil {
+		tx.Rollback()
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	tx.Commit()
+
+	fmt.Fprintf(w, "%s", "{\"status\": true}")
 }
 
 func getUser(c web.C, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	userID, err := strconv.ParseInt(c.URLParams["userid"], 10, 64)
+	pp.Println(db)
 	if err != nil {
 		fmt.Println("error")
 	}
 	fmt.Println(userID)
 
-	pp.Println(db)
-
 	user := new(User)
-	err = db.First(user, userID).Error
-	if err  != nil {
+	err = db.Find(user, userID).Error
+	if err != nil {
 		fmt.Println("user Not found")
 	}
 
-	var response ResponseJson
-	response.Id = userID
-	response.Name = user.Name
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(user)
 }
 
 func getUsers(c web.C, w http.ResponseWriter, r *http.Request) {
-}
+	w.Header().Set("Content-Type", "application/json")
+	var users []User
+	err := db.Find(&users).Error
+	if err != nil {
+		fmt.Println("user Not found")
+	}
 
-func getPay(c web.C, w http.ResponseWriter, r *http.Request) {
+	for i := 0; i < len(users); i++ {
+		if users[i].Email == "" {
+			users[i].Email = "null"
+		}
+	}
 
+	json.NewEncoder(w).Encode(users)
 }
 
 func Route(m *web.Mux) {
+	m.Post("/user", addUser)
 	m.Get("/user/:userid", getUser)
-	m.Get("/pay/:payid", getPay)
+	m.Get("/users", getUsers)
 }
 
 func main() {
-	var hoge string
-	flag.StringVar(&hoge, "hoge", "hoge", "hoge")
-	flag.Parse()
-
 	var err error
 
-	db, err = gorm.Open("sqlite3", "user.db")
+	db, err = gorm.Open("sqlite3", "api.db")
 	if err != nil {
 		panic(err)
 	}
@@ -80,14 +99,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	user := new(User)
-	err = db.First(user, 1).Error
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	pp.Println(db)
 
 	Route(goji.DefaultMux)
 	goji.Serve()
