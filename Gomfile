@@ -1,0 +1,5 @@
+gom 'github.com/go-sql-driver/mysql', :commit => '7ebe0a500653eeb1859664bed5e48dec1e164e73'
+gom 'github.com/jinzhu/gorm', :commit => '1819dda80ab0963da3ec38f484264c1cab543786'
+gom 'github.com/jinzhu/inflection', :commit => '3272df6c21d04180007eb3349844c89a3856bc25'
+gom 'github.com/mattn/go-sqlite3', :commit => '10876d7dac65f02064c03d7372a2f1dfb90043fe'
+gom 'github.com/zenazn/goji', :commit => 'e9a3f0275121c2439e2bd4b5dc6a9eb3fbe88451'
