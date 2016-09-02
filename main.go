@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/k0kubun/pp"
@@ -18,8 +17,6 @@ import (
 var db *gorm.DB
 
 type User struct {
-	gorm.Model
-
 	Name  string `sql:"not null; unique"`
 	Email string
 }
